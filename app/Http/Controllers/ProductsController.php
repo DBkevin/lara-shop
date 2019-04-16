@@ -56,16 +56,16 @@ class ProductsController extends Controller
         }
         $favored = false;
         // 用户未登陆时返回的时null, 已登陆时返回时对应的用户对象
-        if($user=$request->user()){
+        if ($user = $request->user()) {
             // 从当前用户已收藏的商品中搜索ID为当前商品id的商品
             //bo0lval()函数用于吧值转换为布尔值
-            $favored=boolval($user->favoriteProducts()->find($product->id));
+            $favored = boolval($user->favoriteProducts()->find($product->id));
         }
-        return view('products.show', compact('product','favored'));
+        return view('products.show', compact('product', 'favored'));
     }
 
-  
-     public function favor(Product $product, Request $request)
+
+    public function favor(Product $product, Request $request)
     {
         $user = $request->user();
         if ($user->favoriteProducts()->find($product->id)) {
@@ -83,11 +83,19 @@ class ProductsController extends Controller
      * @param Request $request
      * @return void
      */
-    public function disfavor(Product $product ,Request $request){
-        $user=$request->user();
+    public function disfavor(Product $product, Request $request)
+    {
+        $user = $request->user();
 
         $user->favoriteProducts()->detach($product);
 
         return [];
+    }
+
+    public function favorites(Request $request)
+    {
+        $products = $request->user()->favoriteProducts()->paginate(16);
+
+        return view('products.favorites', compact('products'));
     }
 }
