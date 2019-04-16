@@ -104,6 +104,7 @@
                 }
         });
     });
+    //取消关注
     $(".btn-disfavor").click(function (){
         axios.delete('{{  route('products.disfavor',['product'=>$product->id])}}')
             .then(function (){
@@ -112,6 +113,36 @@
                     location.reload();
                 });
             });
+    });
+    // 加入购物车
+    $(".btn-add-to-cart").click(function (){
+        // 请求加入到购物车接口
+        axios.post('{{route('cart.add')}}',{
+            sku_id:$('label.active input[name=skus]').val(),
+            amount:$('.cart_amount input').val(),
+        })
+            .then(function (){ //请求成功执行此回调
+                swal('加入购物车成功','','success');
+            },function(error){
+                //请求失败执行此回调
+                if(error.response.status===401){
+                    // http401为未登陆
+                    swal('请先登陆','','error');
+                }else if(error.response.status===422){
+                    // html422状态码,
+                    var html='<div>';
+                        _.each(error.response.data.errors,function (errors){
+                            _.each(errors,function(error){
+                                html+=error+'</br>';
+                            })
+                        });
+                        html+='</html>';
+                        swal({content:$(html)[0],icon:'error'})
+                }else{
+                    // 其他情况湿系统刮了
+                    sawl('系统错误','','error');
+                }
+            })
     });
   });
 
