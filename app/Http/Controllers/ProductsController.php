@@ -9,51 +9,85 @@ use App\Exceptions\InvalidRequestException;
 class ProductsController extends Controller
 {
     //
-    public function index(Request $requset){
-      //  $products=Product::query()->where('on_sale',true)->paginate(16);
+    public function index(Request $requset)
+    {
+        //  $products=Product::query()->where('on_sale',true)->paginate(16);
         //创建一个查询构建器
-        $builder=Product::query()->where('on_sale',true);
+        $builder = Product::query()->where('on_sale', true);
         // 判断是否有提交search参数,如果有就赋值给$search变量
         // search 参数用来模糊搜索商品
-        if($search=$requset->input('search','')){
-            $like='%'.$search.'%';
+        if ($search = $requset->input('search', '')) {
+            $like = '%' . $search . '%';
             //模糊搜索商品标题,商品详情,SKU标题,SKU描述
-            $builder->where(function($query) use ($like){
-                $query->where('title','like',$like)
-                      ->orWhere('description','like',$like)
-                      ->orWhereHas('skus',function($query) use ($like){
-                          $query->where('title','like',$like)
-                                ->orWhere('description','like',$like);
-                      });
-
+            $builder->where(function ($query) use ($like) {
+                $query->where('title', 'like', $like)
+                    ->orWhere('description', 'like', $like)
+                    ->orWhereHas('skus', function ($query) use ($like) {
+                        $query->where('title', 'like', $like)
+                            ->orWhere('description', 'like', $like);
+                    });
             });
         }
         // 是否有提交order参数,如果有就赋值给$order变量
         // order参数用来控制商品的排序
-        if($order=$requset->input('order',"")){
+        if ($order = $requset->input('order', "")) {
             //是否是以_asc或者_desc结尾
-            if(preg_match('/^(.+)_(asc|desc)$/',$order,$m)){
+            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)) {
                 //若果字符串的开头是这3个字符串之一,说明是一个合法的排序值
-                if(in_array($m[1],['price','sold_count','rating'])){
+                if (in_array($m[1], ['price', 'sold_count', 'rating'])) {
                     // 根据传入的排序值来构造排序参数
-                    $builder->orderBy($m[1],$m[2]);
+                    $builder->orderBy($m[1], $m[2]);
                 }
             }
         }
-        $products=$builder->paginate(16);
-        $filters=[
-            'search'=>$search,
-            'order'=>$order,
+        $products = $builder->paginate(16);
+        $filters = [
+            'search' => $search,
+            'order' => $order,
         ];
-        return view('products.index',compact('products','filters'));
+        return view('products.index', compact('products', 'filters'));
     }
 
-    public function show(Product $product ,Request $request){
+    public function show(Product $product, Request $request)
+    {
         //判断商品是否上架,如果没有上架则抛出异常
-        if(!$product->on_sale){
+        if (!$product->on_sale) {
             throw new InvalidRequestException('商品未上架');
         }
-        return view('products.show',compact('product'));
+        $favored = false;
+        // 用户未登陆时返回的时null, 已登陆时返回时对应的用户对象
+        if($user=$request->user()){
+            // 从当前用户已收藏的商品中搜索ID为当前商品id的商品
+            //bo0lval()函数用于吧值转换为布尔值
+            $favored=boolval($user->favoriteProducts()->find($product->id));
+        }
+        return view('products.show', compact('product','favored'));
     }
 
+  
+     public function favor(Product $product, Request $request)
+    {
+        $user = $request->user();
+        if ($user->favoriteProducts()->find($product->id)) {
+            return [];
+        }
+
+        $user->favoriteProducts()->attach($product);
+
+        return [];
+    }
+    /**
+     * 取消关注
+     *
+     * @param Product $product
+     * @param Request $request
+     * @return void
+     */
+    public function disfavor(Product $product ,Request $request){
+        $user=$request->user();
+
+        $user->favoriteProducts()->detach($product);
+
+        return [];
+    }
 }
