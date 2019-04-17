@@ -6,10 +6,16 @@ use Illuminate\Http\Request;
 use App\Http\Requests\AddCartRequest;
 use App\Models\CartItem;
 use App\Models\ProductSku;
+use App\Services\CartService;
 
 class CartController extends Controller
 {
-    //
+    protected $cartService;
+    //利用laravel 的自动解析功能注入CartService类
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService=$cartService;
+    }
 
     /**
      * 添加到购物车
@@ -19,7 +25,7 @@ class CartController extends Controller
      */
     public function add(AddCartRequest $request)
     {
-        $user = $request->user();
+        /*$user = $request->user();
         $skuId = $request->input('sku_id');
         $amount = $request->input('amount');
         //从数据库中查询该商品是否已经在购物车中
@@ -35,6 +41,8 @@ class CartController extends Controller
             $cart->productSku()->associate($skuId);
             $cart->save();
         }
+        */
+        $this->cartService->add($request->input('sku_id'), $request->input('amount'));
         return [];
     }
     /**
@@ -45,8 +53,11 @@ class CartController extends Controller
      */
     public function index(Request $request)
     {
-        $cartItems = $request->user()->cartItems()->with(['productSku.product'])->get();
+        //$cartItems = $request->user()->cartItems()->with(['productSku.product'])->get();
+        $cartItems = $this->cartService->get();
         $addresses = $request->user()->addresses()->orderBy('last_used_at', 'desc')->get();
+
+        return view('cart.index', ['cartItems' => $cartItems, 'addresses' => $addresses]);
 
         return view('cart.index', compact('cartItems','addresses'));
     }
@@ -54,7 +65,8 @@ class CartController extends Controller
 
     public function remove(ProductSku $sku, Request $request)
     {
-        $request->user()->CartItems()->where('product_sku_id', $sku->id)->delete();
+       // $request->user()->CartItems()->where('product_sku_id', $sku->id)->delete();
+       $this->cartService->remove($sku->id);
         return [];
     }
 }
