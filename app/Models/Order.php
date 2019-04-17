@@ -47,12 +47,19 @@ class Order extends Model
         'ship_data',
         'extra',
     ];
+    protected $casts = [
+        'closed'    => 'boolean',
+        'reviewed'  => 'boolean',
+        'address'   => 'json',
+        'ship_data' => 'json',
+        'extra'     => 'json',
+    ];
     protected $dates=[
         'paid_at',
     ];
     
     protected static function boot(){
-        parnet::boot();
+        parent::boot();
         //监听模型创建事件,在写入数据库之前触发
         static::creating(function ($model){
             // 如果模型的no 字段为空

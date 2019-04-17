@@ -122,7 +122,8 @@ return [
     'key' => env('APP_KEY'),
 
     'cipher' => 'AES-256-CBC',
-
+    //关闭订单时间单位秒
+    'order_ttl'=>1800,
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
