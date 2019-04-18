@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Exceptions\InvalidRequestException;
 use Carbon\Carbon;
+use Endroid\QrCode\QrCode;
+
 
 class PaymentController extends Controller
 {
@@ -76,11 +78,16 @@ class PaymentController extends Controller
             throw new InvalidRequestException('订单状态不正确');
         }
         // scan 方法为拉起微信支付扫码支付
-        return app('wechat_pay')->scan([
+        $wechatOrder=app('wechat_pay')->scan([
             'out_trade_no'=>$order->no,//商户订单流水好,与支付宝out_trade_no一样
             'total_fee'=>$order->total_amount *100,// 与支付宝不同,微信支付的金额代为是分,
             'body'=>'支付LaravelShop的订单'.$order->no,//订单描述
         ]);
+        //吧要转的字符串作为qrCode的构造函数参数
+        $qrCode=new QrCode($wechatOrder->code_url);
+
+        //将生成的二维码图片数据以字符串行是输出,b并带上相应的类型响应
+        return response($qrCode->writeString(),200,['Content-Type'=>$qrCode->getContentType()]);
     }
 
      public function wechatNotify()
