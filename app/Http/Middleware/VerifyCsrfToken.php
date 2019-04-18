@@ -19,6 +19,9 @@ class VerifyCsrfToken extends Middleware
      * @var array
      */
     protected $except = [
-        //
+        //无需验证例外路由
+        'payment/alipay/notify',
     ];
 }
+
+

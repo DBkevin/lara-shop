@@ -36,7 +36,7 @@ class Order extends Model
         'address',
         'total_amount',
         'remark',
-        'padi_at',
+        'paid_at',
         'payment_method',
         'payment_no',
         'refund_status',
