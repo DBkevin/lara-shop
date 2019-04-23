@@ -10,11 +10,11 @@ return [
         ],
     ],
     'wechar' => [
-        'app_id' => '',
-        'mch_id' => '',
-        'key' => '',
-        'cert_clien' => '',
-        'cert_key' => '',
+        'app_id' => 'wxb0f8ca1c4347edff',
+        'mch_id' => '1499492312',
+        'key' => '3rrpfgetx0bwopuxalcvmro5cufdgtzw',
+        'cert_clien' => resource_path('wechat_pay/apiclient_cert.pem'),
+        'cert_key' => resource_path('wechat_pay/apiclient_key.pem'),
         'log' => [
             'file' => storage_path('logs/wechat_pay.log'),
         ],
