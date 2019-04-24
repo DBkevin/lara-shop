@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Exceptions\InvalidRequestException;
 use App\Models\OrderItem;
-
+use App\Models\Category;
 
 class ProductsController extends Controller
 {
@@ -30,6 +30,19 @@ class ProductsController extends Controller
                     });
             });
         }
+        //如果又传入一个category_id字段,并且在数据库中有对应的类目
+        if ($requset->input('category_id') && $category = Category::find($requset->input('category_id'))) {
+            //如果这事一个父类目
+            if ($category->is_directory) {
+                //则筛选除该夫类目下所有的之类的商品
+                $builder->whereHas('category', function ($query) use ($category) {
+                    $query->where('path', 'like', $category->path . $category->id . '-%');
+                });
+            } else {
+                //如果这不是一个父类目,则直接筛选此类目下的商品
+                $builder->where('category_id', $category->id);
+            }
+        }
         // 是否有提交order参数,如果有就赋值给$order变量
         // order参数用来控制商品的排序
         if ($order = $requset->input('order', "")) {
@@ -47,7 +60,8 @@ class ProductsController extends Controller
             'search' => $search,
             'order' => $order,
         ];
-        return view('products.index', compact('products', 'filters'));
+        $category = $category ?? null;
+        return view('products.index', compact('products', 'filters','category'));
     }
 
     public function show(Product $product, Request $request)
@@ -63,7 +77,7 @@ class ProductsController extends Controller
             //bo0lval()函数用于吧值转换为布尔值
             $favored = boolval($user->favoriteProducts()->find($product->id));
         }
-         $reviews = OrderItem::query()
+        $reviews = OrderItem::query()
             ->with(['order.user', 'productSku']) // 预先加载关联关系
             ->where('product_id', $product->id)
             ->whereNotNull('reviewed_at') // 筛选出已评价的
@@ -71,7 +85,7 @@ class ProductsController extends Controller
             ->limit(10) // 取出 10 条
             ->get();
 
-        return view('products.show', compact('product', 'favored','reviews'));
+        return view('products.show', compact('product', 'favored', 'reviews'));
     }
 
 
