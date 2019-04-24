@@ -63,6 +63,7 @@
         </div>
       @endif
     </div>
+</div>
     <!-- 展示子类目结束 -->
     <div class="row products-list">
                 <!-- 筛选组件结束 -->
