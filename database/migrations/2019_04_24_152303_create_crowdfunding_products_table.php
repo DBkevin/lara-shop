@@ -21,7 +21,7 @@ class CreateCrowdfundingProductsTable extends Migration
             $table->decimal("total_amount",10,2)->default(0)->comment('当前金额');
             $table->unsignedInteger('user_count')->default(0)->comment('参数人数');
             $table->dateTime('end_at')->comment('结束时间');
-            $table->string('status')->defaut(\App\Models\CrowdfundingProduct::STATUS_FUNDING)->comment("当前状态,默认值为筹款中");
+            $table->string('status')->default(\App\Models\CrowdfundingProduct::STATUS_FUNDING)->comment("当前状态,默认值为筹款中");
         });
     }
 
