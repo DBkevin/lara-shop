@@ -11,6 +11,7 @@ use App\Models\ProductSku;
 use App\Models\UserAddress;
 use App\Exceptions\InvalidRequestException;
 use App\Exceptions\CouponCodeUnavailableException;
+use App\Exceptions\InternalException;
 
 class OrderService
 {
@@ -35,7 +36,7 @@ class OrderService
                     'contact_name' => $address->contact_name,
                     'contact_phone' => $address->contact_phone,
                 ],
-                'type'=>Order::TYPE_NORMAL,
+                'type' => Order::TYPE_NORMAL,
                 'remark' => $remark,
                 'total_amount' => 0,
             ]);
@@ -104,7 +105,7 @@ class OrderService
                     'contact_name' => $address->contact_name,
                     'contact_phone' => $address->contact_phone,
                 ],
-                'type'=>Order::TYPE_CROWDFUNDING,
+                'type' => Order::TYPE_CROWDFUNDING,
                 'remark' => '',
                 'total_amount' => $sku->price * $amount,
             ]);
@@ -128,10 +129,57 @@ class OrderService
         });
 
         //众筹结束时间减去当前时间得到的剩余描述
-        $crowdfundingTtl = $sku->product->crowdfunding->end_at->getTimestamp()-time();
+        $crowdfundingTtl = $sku->product->crowdfunding->end_at->getTimestamp() - time();
         //生育秒数与默认订单关闭时间取较小值作为订单关闭时间
         dispatch(new CloseOrder($order, min(config('app.order_ttl'), $crowdfundingTtl)));
 
         return $order;
+    }
+
+    public function refundOrder(Order $order)
+    {
+        //判断该订单的支付方式
+        switch ($order->payment_method) {
+            case 'wechat':
+                //生成退款订单号
+                $refundNo = Order::getAvailableRefundNo();
+                app('wechat_pay')->refund([
+                    'out_trade_no' => $order->no,
+                    'total_fee' => $order->total_amount * 100,
+                    'refund_fee' => $order->total_amount * 100,
+                    'out_refund_no' => $refundNo,
+                    'notify_url' => ngrok_url('payment.wechat.refund_notify'),
+                ]);
+                $order->update([
+                    'refund_no' => $refundNo,
+                    'refund_status' => Order::REFUND_STATUS_PROCESSING,
+                ]);
+                break;
+            case 'alipay':
+                $refundNo = Order::getAvailableRefundNo();
+                $ret = app('alipay')->refund([
+                    'out_trade_no' => $order->no,
+                    'refund_amount' => $order->total_amount,
+                    'out_request_no' => $refundNo,
+                ]);
+                if ($ret->sub_code) {
+                    $extra = $order->extra;
+                    $extra['refund_failed_code'] = $ret->sub_code;
+                    $order->update([
+                        'refund_no' => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_FAILED,
+                        'extra' => $extra,
+                    ]);
+                } else {
+                    $order->update([
+                        'refund_no' => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_SUCCESS,
+                    ]);
+                }
+                break;
+            default:
+                throw new InternalException('未知订单支付方式：' . $order->payment_method);
+                break;
+        }
     }
 }
