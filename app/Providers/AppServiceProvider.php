@@ -19,7 +19,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('alipay', function () {
             $config = config('pay.alipay');
             //$config['notify_url'] = route('payment.alipay.notify');
-            $config['notify_url'] = 'http://requestbin.fullcontact.com/13a5qaj1';
+           // $config['notify_url'] = 'http://requestbin.fullcontact.com/13a5qaj1';
+            $config['notify_url'] = ngrok_url('payment.alipay.notify');
             $config['return_url'] = route('payment.alipay.return');
             // 判断当前环境是否为线上环境
             if (app()->environment() !== 'production') {
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('wechat_pay', function () {
             $config = config('apy.weichar');
             //回调 $config['notify_url'] = 'http://requestbin.fullcontact.com/[替换成你自己的url]'; 
+            $config['notify_url'] = ngrok_url('payment.wechat.notify');
             if (app()->environment() !== 'production') {
                 $config['log']['level'] = Logger::DEBUG;
             } else {
