@@ -19,6 +19,7 @@ class UserAddress extends Model
     ];
     // 允许直接跟carbon类方法 如$this->last_used_at->getTimestamp();
     protected $dates=['last_used_at'];
+    protected $appends=['full_address'];
     /**
      * 关联user 表,一对一关联
      *
