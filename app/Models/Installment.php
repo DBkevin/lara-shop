@@ -61,7 +61,7 @@ class Installment extends Model
             //
             $no = $prefix . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             //判断是否已经纯正
-            if (!static::query()->where('on', $no)->exists()) {
+            if (!static::query()->where('no', $no)->exists()) {
                 return $no;
             }
         }
