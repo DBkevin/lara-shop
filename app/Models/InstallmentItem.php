@@ -38,14 +38,15 @@ class InstallmentItem extends Model
     public function installment(){
         return $this->belongsTo(Installment::class);
     }
-    //创建一个访问器,返回当前还款计划需还款的总金额
-    public function getTotalAttribute(){
-        //小数点计算需要用bcmath扩展提供的函数
-        $total = big_number($this->base)->add($this->fee);
-        if(!is_null($this->fine)){
-            $total=bcadd($total,$this->find,2);
+      // 创建一个访问器，返回当前还款计划需还款的总金额
+        public function getTotalAttribute()
+    {
+       $total = big_number($this->base)->add($this->fee);
+        if (!is_null($this->fine)) {
+            $total->add($this->fine);
         }
-        return $total;
+
+        return $total->getValue();
     }
 
     //创建一个访问器,返回当前还款计划是否已经逾期

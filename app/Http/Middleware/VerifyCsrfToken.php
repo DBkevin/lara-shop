@@ -22,6 +22,7 @@ class VerifyCsrfToken extends Middleware
         //无需验证例外路由
         'payment/alipay/notify',
         'payment/wechat/notify',
+        'installments/alipay/notify',
     ];
 }
 
